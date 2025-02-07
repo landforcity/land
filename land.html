@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الدوري الممتاز | Blue League</title>
+    <style>
+        :root {
+            --primary: #2196F3;
+            --secondary: #1976D2;
+            --background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --text: #2c3e50;
+            --error: #ff4757;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            min-height: 100vh;
+            color: var(--text);
+        }
+
+        .hero-banner {
+            height: 300px;
+            background: url('blue.png') center/cover;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-banner::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(33,150,243,0.8), rgba(25,118,210,0.9));
+            mix-blend-mode: multiply;
+        }
+
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 20px;
+            background: rgba(255,255,255,0.95);
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .tab-btn {
+            padding: 12px 35px;
+            border: none;
+            border-radius: 30px;
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 16px;
+            letter-spacing: 1px;
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(33,150,243,0.4);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+            margin: 20px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+            animation: slideIn 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .active-tab {
+            display: block;
+        }
+
+        .admin-panel {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 30px;
+            background: rgba(255,255,255,0.98);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .glowing-border {
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 15px rgba(33,150,243,0.3);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        th {
+            background: var(--primary);
+            color: white;
+            font-size: 18px;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+            transform: scale(1.02);
+            transition: all 0.2s;
+        }
+
+        .delete-btn {
+            background: var(--error);
+            padding: 8px 20px;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .delete-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(255,71,87,0.4);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .admin-login {
+            background: rgba(255,255,255,0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            max-width: 500px;
+            margin: 50px auto;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 15px;
+            margin: 15px 0;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(33,150,243,0.3);
+            outline: none;
+        }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+</head>
+<body>
+    <div class="hero-banner"></div>
+
+    <div class="nav-tabs">
+        <button class="tab-btn" onclick="showTab('ranking')">🏆 الترتيب</button>
+        <button class="tab-btn" onclick="showTab('matches')">⚽ المباريات</button>
+        <button class="tab-btn" onclick="handleAdminTab()">🔐 الإدارة</button>
+    </div>
+
+    <!-- تبويب الترتيب -->
+    <div id="ranking" class="tab-content active-tab">
+        <h2 style="text-align: center; margin: 20px 0; color: var(--primary);">جدول الترتيب</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>الفريق</th>
+                    <th>النقاط</th>
+                    <th>الأهداف</th>
+                    <th>المباريات</th>
+                </tr>
+            </thead>
+            <tbody id="rankingBody"></tbody>
+        </table>
+    </div>
+
+    <!-- تبويب المباريات -->
+    <div id="matches" class="tab-content">
+        <h2 style="text-align: center; margin: 20px 0; color: var(--primary);">سجل المباريات</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>الفريق الأول</th>
+                    <th>النتيجة</th>
+                    <th>الفريق الثاني</th>
+                    <th>التاريخ</th>
+                </tr>
+            </thead>
+            <tbody id="matchesBody"></tbody>
+        </table>
+    </div>
+
+    <!-- تبويب الإدارة -->
+    <div id="admin" class="tab-content">
+        <div class="admin-panel">
+            <div id="adminLogin">
+                <h2 style="text-align: center; margin-bottom: 30px;">🔒 التحقق الإداري</h2>
+                <input type="password" class="form-input glowing-border" id="adminCode" placeholder="الكود السري">
+                <button class="tab-btn" onclick="verifyAdmin()" style="width: 100%; margin-top: 15px;">تحقق</button>
+            </div>
+
+            <div id="adminControls" style="display: none;">
+                <h2 style="text-align: center; margin-bottom: 30px; color: var(--primary);">👑 لوحة التحكم</h2>
+                
+                <!-- إدارة الفرق -->
+                <div class="form-group">
+                    <input type="text" class="form-input" id="newTeam" placeholder="اسم الفريق الجديد">
+                    <button class="tab-btn" onclick="addTeam()" style="margin-top: 10px;">➕ إضافة فريق</button>
+                </div>
+
+                <div id="teamsList" style="margin: 25px 0;"></div>
+
+                <!-- تسجيل المباريات -->
+                <h3 style="margin: 25px 0; color: var(--secondary);">تسجيل نتيجة مباراة</h3>
+                <select class="form-input" id="team1"></select>
+                <input type="number" class="form-input" id="score1" placeholder="أهداف الفريق الأول">
+                
+                <select class="form-input" id="team2"></select>
+                <input type="number" class="form-input" id="score2" placeholder="أهداف الفريق الثاني">
+                
+                <button class="tab-btn" onclick="addMatch()" style="width: 100%; margin-top: 20px;">💾 حفظ النتيجة</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 🔥 Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAdIVB8SQ8IagkCRzVeiD0XW6sSpD41JQU",
+            authDomain: "land-fadaa.firebaseapp.com",
+            databaseURL: "https://land-fadaa-default-rtdb.firebaseio.com",
+            projectId: "land-fadaa",
+            storageBucket: "land-fadaa.firebasestorage.app",
+            messagingSenderId: "576344834439",
+            appId: "1:576344834439:web:992bc6d285975ac1c95322"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // 🌐 Webhook Configuration
+        const WEBHOOK_URL = 'https://discord.com/api/webhooks/YOUR_WEBHOOK_URL';
+
+        let currentCode = null;
+        let teams = [];
+        let matches = [];
+
+        // 📡 Real-time Database Listeners
+        function initDatabase() {
+            database.ref('teams').on('value', (snapshot) => {
+                teams = snapshot.val() || [];
+                updateRanking();
+                updateTeamOptions();
+            });
+
+            database.ref('matches').on('value', (snapshot) => {
+                matches = snapshot.val() || [];
+                updateMatches();
+            });
+        }
+
+        // 🎯 Update Functions
+        function updateRanking() {
+            teams.sort((a, b) => (b.wins * 2 + b.goals) - (a.wins * 2 + a.goals));
+            const tbody = document.getElementById('rankingBody');
+            tbody.innerHTML = teams.map((team, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${team.name}</td>
+                    <td>${team.wins * 2 + team.goals}</td>
+                    <td>${team.goals}</td>
+                    <td>${team.matches}</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateMatches() {
+            const tbody = document.getElementById('matchesBody');
+            tbody.innerHTML = matches.map(match => `
+                <tr>
+                    <td>${match.team1}</td>
+                    <td>${match.score1} - ${match.score2}</td>
+                    <td>${match.team2}</td>
+                    <td>${new Date().toLocaleDateString('ar-EG', { dateStyle: 'full' })}</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateTeamOptions() {
+            const options = teams.map(team => `<option value="${team.name}">${team.name}</option>`).join('');
+            document.getElementById('team1').innerHTML = options;
+            document.getElementById('team2').innerHTML = options;
+        }
+
+        // 🔐 Admin Functions
+        async function sendVerificationCode() {
+            currentCode = Math.floor(1000 + Math.random() * 9000);
+            try {
+                await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: `🔐 كود التحقق: ||${currentCode}||` })
+                });
+                alert('✅ تم إرسال الكود إلى الديسكورد!');
+            } catch (error) {
+                alert('❌ فشل الإرسال! تأكد من اتصال الإنترنت');
+            }
+        }
+
+        function verifyAdmin() {
+            const code = document.getElementById('adminCode').value;
+            if (code == currentCode) {
+                document.getElementById('adminLogin').style.display = 'none';
+                document.getElementById('adminControls').style.display = 'block';
+            } else {
+                alert('❌ كود التحقق غير صحيح!');
+            }
+        }
+
+        // ➕ Team Management
+        function addTeam() {
+            const teamName = document.getElementById('newTeam').value.trim();
+            if (teamName) {
+                teams.push({ name: teamName, wins: 0, goals: 0, matches: 0 });
+                database.ref('teams').set(teams);
+                document.getElementById('newTeam').value = '';
+            }
+        }
+
+        // ⚽ Match Management
+        function addMatch() {
+            const team1 = document.getElementById('team1').value;
+            const team2 = document.getElementById('team2').value;
+            const score1 = parseInt(document.getElementById('score1').value) || 0;
+            const score2 = parseInt(document.getElementById('score2').value) || 0;
+
+            teams.forEach(team => {
+                if (team.name === team1) {
+                    team.goals += score1;
+                    team.matches++;
+                    if (score1 > score2) team.wins++;
+                }
+                if (team.name === team2) {
+                    team.goals += score2;
+                    team.matches++;
+                    if (score2 > score1) team.wins++;
+                }
+            });
+
+            matches.push({ team1, team2, score1, score2, date: new Date().toISOString() });
+            
+            database.ref('teams').set(teams);
+            database.ref('matches').set(matches);
+            
+            document.getElementById('score1').value = '';
+            document.getElementById('score2').value = '';
+        }
+
+        // 🎮 Tab Control
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active-tab'));
+            document.getElementById(tabId).classList.add('active-tab');
+        }
+
+        function handleAdminTab() {
+            sendVerificationCode();
+            showTab('admin');
+        }
+
+        // 🚀 Initialize
+        window.onload = () => {
+            initDatabase();
+            updateTeamOptions();
+        };
+    </script>
+</body>
+</html>
