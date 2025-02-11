@@ -1,1 +1,106 @@
+<?php
+require 'firebase-config.php';
 
+// جلب بيانات الفرق والمباريات من Firebase
+$teams = $database->getReference('teams')->getValue();
+$matches = $database->getReference('matches')->getValue();
+?>
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دوري لاند فور</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="hero-banner">
+        <h1>دوري لاند فور</h1>
+    </div>
+
+    <div class="tabs">
+        <button onclick="showTab('ranking')">الترتيب</button>
+        <button onclick="showTab('matches')">المباريات</button>
+        <button onclick="showTab('groups')">المجموعات</button>
+    </div>
+
+    <div id="ranking" class="tab-content">
+        <h2>الترتيب</h2>
+        <table>
+            <tr>
+                <th>الترتيب</th>
+                <th>الفريق</th>
+                <th>النقاط</th>
+                <th>الأهداف</th>
+            </tr>
+            <?php
+            if ($teams) {
+                usort($teams, function($a, $b) {
+                    return $b['points'] - $a['points'];
+                });
+                foreach ($teams as $id => $team) {
+                    echo "<tr>
+                            <td>{$team['rank']}</td>
+                            <td>{$team['name']}</td>
+                            <td>{$team['points']}</td>
+                            <td>{$team['goals']}</td>
+                          </tr>";
+                }
+            }
+            ?>
+        </table>
+    </div>
+
+    <div id="matches" class="tab-content" style="display:none;">
+        <h2>المباريات</h2>
+        <table>
+            <tr>
+                <th>الفريق 1</th>
+                <th>الفريق 2</th>
+                <th>النتيجة</th>
+            </tr>
+            <?php
+            if ($matches) {
+                foreach ($matches as $id => $match) {
+                    echo "<tr>
+                            <td>{$match['team1']}</td>
+                            <td>{$match['team2']}</td>
+                            <td>{$match['result']}</td>
+                          </tr>";
+                }
+            }
+            ?>
+        </table>
+    </div>
+
+    <div id="groups" class="tab-content" style="display:none;">
+        <h2>المجموعات</h2>
+        <?php
+        if ($teams) {
+            $groups = array_chunk($teams, 4, true); // تقسيم الفرق إلى مجموعات
+            foreach ($groups as $group) {
+                echo "<div class='group'>
+                        <h3>المجموعة " . ($group + 1) . "</h3>
+                        <table>
+                            <tr>
+                                <th>الفريق</th>
+                                <th>النقاط</th>
+                                <th>الأهداف</th>
+                            </tr>";
+                foreach ($group as $id => $team) {
+                    echo "<tr>
+                            <td>{$team['name']}</td>
+                            <td>{$team['points']}</td>
+                            <td>{$team['goals']}</td>
+                          </tr>";
+                }
+                echo "</table></div>";
+            }
+        }
+        ?>
+    </div>
+
+    <script src="scripts.js"></script>
+</body>
+</html>
